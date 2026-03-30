@@ -19,7 +19,7 @@ class _MynedHomeState extends State<MynedHome> {
       context: context,
       builder: (context) => CupertinoActionSheet(
         title: const Text("Add New Transaction"),
-        message: const Text("Select a method to import data from your bills"),
+        message: const Text("Select a method to import data "),
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
@@ -31,7 +31,7 @@ class _MynedHomeState extends State<MynedHome> {
               children: [
                 Icon(CupertinoIcons.camera_viewfinder, color: Color(0xFFFF4500)),
                 SizedBox(width: 10),
-                Text("Scan Bill (AI OCR)", style: TextStyle(color: Colors.white)),
+                Text("Scan", style: TextStyle(color: Colors.white)),
               ],
             ),
           ),
@@ -45,7 +45,7 @@ class _MynedHomeState extends State<MynedHome> {
               children: [
                 Icon(CupertinoIcons.doc_text_fill, color: Color(0xFFFF4500)),
                 SizedBox(width: 10),
-                Text("Upload PDF / Excel", style: TextStyle(color: Colors.white)),
+                Text("Upload", style: TextStyle(color: Colors.white)),
               ],
             ),
           ),
@@ -119,8 +119,8 @@ class _MynedHomeState extends State<MynedHome> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            //const SizedBox(height: 5),
             const Text("MYNED", style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 2)),
-            Text(isAdvancedMode ? "Shared Workspace" : "Personal Space", style: const TextStyle(color: Colors.white38, fontSize: 12)),
           ],
         ),
         CupertinoSlidingSegmentedControl<bool>(
