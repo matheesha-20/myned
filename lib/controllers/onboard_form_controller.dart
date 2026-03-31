@@ -14,16 +14,27 @@ class OnboardingController extends GetxController {
   var hasSideHustle = false.obs;
   var selectedRole = "Admin".obs; 
   var addedMembers = <Map<String, dynamic>>[].obs;
+
+  var personalCurrency = "LKR".obs;
+  var workspaceCurrency = "LKR".obs;
+
+  final List<String> currencies = ["LKR", "USD", "EUR", "GBP", "INR", "AUD"];
   
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passController = TextEditingController();
   final businessNameController = TextEditingController();
 
+  final initialIncomeController = TextEditingController();
+  final initialExpenseController = TextEditingController();
+
+  final personalIncomeController = TextEditingController();
+  final personalExpenseController = TextEditingController();
+
   // Workspace Data
   var workspaceAction = "".obs; 
   final workspaceIdController = TextEditingController();
-  final memberEmailController = TextEditingController(); 
+  final memberEmailController = TextEditingController();
   
   // Permissions (Owner/Admin permissions default set කර ඇත)
   var permissions = {
@@ -127,42 +138,63 @@ class OnboardingController extends GetxController {
   // --- NEW: Firebase Registration Logic ---
   Future<void> registerUser(VoidCallback onSuccess) async {
     try {
-      // 1. Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passController.text.trim(),
       );
 
       String uid = userCredential.user!.uid;
       String workspaceId = "";
+      
+      // 1. අගයන් Parse කරගනිමු
+      double sHIncome = double.tryParse(initialIncomeController.text.trim()) ?? 0.0;
+      double sHExpense = double.tryParse(initialExpenseController.text.trim()) ?? 0.0;
+      double sHBalance = sHIncome - sHExpense;
 
-      // 2. Workspace Handling
-      if (workspaceAction.value == "create") {
-        workspaceId = await generateUniqueWorkspaceId();
-        
-        await FirebaseFirestore.instance.collection('workspaces').doc(workspaceId).set({
-          'businessName': businessNameController.text.trim(),
-          'ownerId': uid,
-          'createdAt': FieldValue.serverTimestamp(),
-          'members': addedMembers,
-        });
-      } else {
-        workspaceId = workspaceIdController.text.trim();
+      double pIncome = double.tryParse(personalIncomeController.text.trim()) ?? 0.0;
+      double pExpense = double.tryParse(personalExpenseController.text.trim()) ?? 0.0;
+      double pBalance = pIncome - pExpense;
+
+      bool isBusinessOnly = mainAccountType.value == "Business";
+      bool isSideHustle = hasSideHustle.value;
+
+      // 2. Workspace එක (Side Hustle හෝ Business සඳහා)
+      if (isBusinessOnly || isSideHustle) {
+        workspaceId = (workspaceAction.value == "create") 
+            ? await generateUniqueWorkspaceId() 
+            : workspaceIdController.text.trim();
+
+        if (workspaceAction.value == "create") {
+          await FirebaseFirestore.instance.collection('workspaces').doc(workspaceId).set({
+            'businessName': businessNameController.text.trim(),
+            'ownerId': uid,
+            'currentBalance': sHBalance, // Side hustle සල්ලි මෙතනට
+            'currentincome': sHIncome,
+            'currentExpense': sHExpense,
+            'currency': workspaceCurrency.value,
+            'createdAt': FieldValue.serverTimestamp(),
+            'members': addedMembers,
+          });
+        }
       }
 
-      // 3. User Profile Saving
-      // Register වෙන කෙනා Owner, අනිත් අය Staff/Admin/Manager
-      String userRole = (workspaceAction.value == "create") ? "Owner" : "Staff";
-
+      // 3. User Profile එක (Personal සල්ලි මෙතනට)
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
         'name': nameController.text.trim(),
         'email': emailController.text.trim(),
-        'password': passController.text.trim(), // Requested password field
+        'accountType': mainAccountType.value, 
+        'hasSideHustle': isSideHustle,
         'workspaceId': workspaceId,
-        'role': userRole,
-        'permissions': _getPermissionsByRole(userRole),
+        // Personal Only නම් initialIncomeController එකෙන් ගන්නවා, 
+        // Side Hustle නම් personalIncomeController එකෙන් ගන්නවා.
+        'personalBalance': isSideHustle ? pBalance : (!isBusinessOnly ? sHBalance : 0.0),
+        'personalIncome': isSideHustle ? pIncome : (!isBusinessOnly ? sHIncome : 0.0),
+        'personalExpense': isSideHustle ? pExpense : (!isBusinessOnly ? sHExpense : 0.0),
+        'personalCurrency': personalCurrency.value,
+        'role': (isBusinessOnly || isSideHustle) 
+            ? (workspaceAction.value == "create" ? "Owner" : "Staff") 
+            : "Personal",
         'joinedAt': FieldValue.serverTimestamp(),
       });
 
@@ -273,6 +305,10 @@ class OnboardingController extends GetxController {
     businessNameController.dispose();
     workspaceIdController.dispose();
     memberEmailController.dispose();
+    initialIncomeController.dispose();
+    initialExpenseController.dispose();
+    personalIncomeController.dispose();
+    personalExpenseController.dispose();
     super.onClose();
   }
 }

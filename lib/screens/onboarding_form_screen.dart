@@ -71,6 +71,7 @@ class MultiStepOnboarding extends StatelessWidget {
           _buildSelectionTile("Personal", "Private expenses", CupertinoIcons.person, "Personal", true),
           const SizedBox(height: 15),
           _buildSelectionTile("Business", "Company finances", CupertinoIcons.briefcase, "Business", true),
+          const SizedBox(height: 10),
           Obx(() => controller.mainAccountType.value == "Personal"
             ? _buildToggle("Side Hustle?", controller.hasSideHustle.value, (v) => controller.hasSideHustle.value = v)
             : const SizedBox.shrink()),
@@ -249,21 +250,99 @@ class MultiStepOnboarding extends StatelessWidget {
 }
 
   Widget _stepFinalFinances() {
+  return Obx(() {
+    bool isSH = controller.hasSideHustle.value;
+
     return _buildPageTemplate(
       title: "Quick Start",
-      subtitle: "Current status for today",
+      subtitle: isSH ? "Set up both your accounts" : "Enter your starting balance",
       nextLabel: "Finish",
       content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField("Initial Income", TextEditingController(), CupertinoIcons.plus_circle, isNum: true),
+          if (isSH) ...[
+            const Text("Personal Account (Salary, etc.)", style: TextStyle(color: Color(0xFFFF4500), fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            // Personal Currency Picker
+            _buildCurrencyPicker("Select Personal Currency", controller.personalCurrency),
+            const SizedBox(height: 10),
+            _buildTextField("Initial Personal Income", controller.personalIncomeController, CupertinoIcons.money_dollar_circle, isNum: true),
+            const SizedBox(height: 10),
+            _buildTextField("Initial Personal Expense", controller.personalExpenseController, CupertinoIcons.minus_circle, isNum: true),
+            
+            const SizedBox(height: 25),
+            const Text("Side Hustle Account", style: TextStyle(color: Color(0xFFFF4500), fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            // Side Hustle Currency Picker
+            _buildCurrencyPicker("Select Side Hustle Currency", controller.workspaceCurrency),
+            const SizedBox(height: 10),
+          ] else ...[
+             // Business හෝ Personal Only අයට අදාළ Currency එක
+             _buildCurrencyPicker("Select Currency", 
+                controller.mainAccountType.value == "Business" ? controller.workspaceCurrency : controller.personalCurrency),
+             const SizedBox(height: 15),
+          ],
+
+          _buildTextField(isSH ? "Initial Side Hustle Income" : "Initial Income", controller.initialIncomeController, CupertinoIcons.plus_circle, isNum: true),
           const SizedBox(height: 15),
-          _buildTextField("Initial Expense", TextEditingController(), CupertinoIcons.minus_circle, isNum: true),
+          _buildTextField(isSH ? "Initial Side Hustle Expense" : "Initial Expense", controller.initialExpenseController, CupertinoIcons.minus_circle, isNum: true),
         ],
       ),
       onNext: () => controller.next(onComplete),
       onBack: () => controller.back(),
     );
-  }
+  });
+}
+
+// Currency Picker එක සඳහා Helper Widget එක
+Widget _buildCurrencyPicker(String label, RxString selectedValue) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(color: CupertinoColors.systemGrey, fontSize: 12)),
+      const SizedBox(height: 5),
+      GestureDetector(
+        onTap: () {
+          showCupertinoModalPopup(
+            context: Get.context!,
+            builder: (_) => Container(
+              height: 250,
+              color: const Color(0xFF121212),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 180,
+                    child: CupertinoPicker(
+                      itemExtent: 35,
+                      onSelectedItemChanged: (index) => selectedValue.value = controller.currencies[index],
+                      children: controller.currencies.map((c) => Center(child: Text(c, style: const TextStyle(color: CupertinoColors.white)))).toList(),
+                    ),
+                  ),
+                  CupertinoButton(child: const Text("Done"), onPressed: () => Get.back()),
+                ],
+              ),
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: CupertinoColors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: CupertinoColors.white.withOpacity(0.1)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Obx(() => Text(selectedValue.value, style: const TextStyle(color: CupertinoColors.white, fontWeight: FontWeight.bold))),
+              const Icon(CupertinoIcons.chevron_down, color: CupertinoColors.systemGrey, size: 16),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
 
   // --- REUSABLE COMPONENTS (Helpers) ---
 
@@ -281,7 +360,7 @@ class MultiStepOnboarding extends StatelessWidget {
             children: [
               if (onBack != null) CupertinoButton(onPressed: onBack, child: const Text("Back", style: TextStyle(color: Colors.white24))),
               const Spacer(),
-              CupertinoButton.filled(onPressed: onNext, child: Text(nextLabel)),
+              CupertinoButton.filled(color: const Color(0xFFFF4500), onPressed: onNext, child: Text(nextLabel)),
             ],
           ),
         ],
@@ -332,8 +411,36 @@ class MultiStepOnboarding extends StatelessWidget {
     );
   }
 
-  Widget _buildToggle(String t, bool v, Function(bool) c) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [Text(t, style: const TextStyle(color: Colors.white)), CupertinoSwitch(value: v, activeColor: const Color(0xFFFF4500), onChanged: c)],
+
+  Widget _buildToggle(String t, bool v, Function(bool) c) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t, 
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Business/Freelancing/Gigs', // මෙතනට ඔයා කැමති නම දාන්න
+              style: TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+          ],
+        ),
+        CupertinoSwitch(
+          value: v, 
+          activeColor: const Color(0xFFFF4500), 
+          onChanged: c
+        ),
+      ],
+    ),
   );
 }
