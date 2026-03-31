@@ -1,8 +1,17 @@
 import 'package:flutter/cupertino.dart';
-import './screens/onboarding_form_screen.dart'; // OnboardingForm එක තියෙන file එක
-import './screens/home_screen.dart';       // MynedHome එක තියෙන file එක
+import 'package:get/get.dart'; // Get package එක import කරන්න
+import './screens/onboarding_form_screen.dart'; 
+import './screens/home_screen.dart'; 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MynedApp());
 }
 
@@ -14,19 +23,12 @@ class MynedApp extends StatefulWidget {
 }
 
 class _MynedAppState extends State<MynedApp> {
-  // ටෙස්ට් කරන්න ලේසි වෙන්න මේ variable එක පාවිච්චි කරමු
-  // මේක false නම් Onboarding එක පෙන්වනවා, true නම් කෙලින්ම Home යනවා
   bool isSetupComplete = false; 
-
-  void completeSetup() {
-    setState(() {
-      isSetupComplete = true;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp(
+    // CupertinoApp වෙනුවට GetCupertinoApp පාවිච්චි කරන්න
+    return GetCupertinoApp( 
       title: 'Myned',
       debugShowCheckedModeBanner: false,
       theme: const CupertinoThemeData(
@@ -34,16 +36,15 @@ class _MynedAppState extends State<MynedApp> {
         primaryColor: Color(0xFFFF4500),
         scaffoldBackgroundColor: Color(0xFF020408),
       ),
-      // මෙතනදී logic එක ක්‍රියාත්මක වෙනවා
       home: isSetupComplete 
-    ? const MynedHome() 
-    : MultiStepOnboarding(
-        onComplete: () {
-          setState(() {
-            isSetupComplete = true;
-          });
-        },
-      ),
+          ? const MynedHome() 
+          : MultiStepOnboarding(
+              onComplete: () {
+                setState(() {
+                  isSetupComplete = true;
+                });
+              },
+            ),
     );
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "749838147100",
+    "project_id": "myned-finance",
+    "storage_bucket": "myned-finance.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749838147100:android:257644beb8178c5d6cc9d9",
+        "android_client_info": {
+          "package_name": "com.myned.finance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHg_CGhpR37RdisC2mjfhfnViZrF4y9a0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -18,16 +18,20 @@ class MultiStepOnboarding extends StatelessWidget {
           children: [
             Obx(() => _buildProgressBar(controller.currentStep.value)),
             Expanded(
-              child: PageView(
+              child: Obx(() => PageView(
                 controller: controller.pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _stepAccountType(),
-                  _stepProfile(),
-                  _stepWorkspace(),
-                  _stepFinalFinances(),
+                  _stepAccountType(), // Index 0
+                  _stepProfile(),     // Index 1
+                  
+                  // Business හෝ Side Hustle තිබේ නම් පමණක් Workspace පියවර එකතු වේ
+                  if (controller.mainAccountType.value == "Business" || controller.hasSideHustle.value) 
+                    _stepWorkspace(), 
+
+                  _stepFinalFinances(), 
                 ],
-              ),
+              )),
             ),
           ],
         ),
@@ -36,21 +40,26 @@ class MultiStepOnboarding extends StatelessWidget {
   }
 
   Widget _buildProgressBar(int step) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: List.generate(4, (i) => Expanded(
-          child: Container(
-            height: 4,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            decoration: BoxDecoration(
-              color: i <= step ? const Color(0xFFFF4500) : Colors.white10,
-              borderRadius: BorderRadius.circular(2),
+    return Obx(() {
+      bool hasWorkspace = controller.mainAccountType.value == "Business" || controller.hasSideHustle.value;
+      int dotCount = hasWorkspace ? 4 : 3;
+
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: List.generate(dotCount, (i) => Expanded(
+            child: Container(
+              height: 4,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                color: i <= step ? const Color(0xFFFF4500) : Colors.white10,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-        )),
-      ),
-    );
+          )),
+        ),
+      );
+    });
   }
 
   Widget _stepAccountType() {
@@ -126,7 +135,7 @@ class MultiStepOnboarding extends StatelessWidget {
             
             // Modern Radio Role Selector
             Row(
-              children: ["Admin", "Staff"].map((role) => Expanded(
+              children: ["Admin", "Manager", "Staff"].map((role) => Expanded(
                 child: GestureDetector(
                   onTap: () => controller.selectedRole.value = role,
                   child: Obx(() => Container(
@@ -144,6 +153,30 @@ class MultiStepOnboarding extends StatelessWidget {
                 ),
               )).toList(),
             ),
+
+            const SizedBox(height: 20),
+
+            // --- Permissions Toggle Section ---
+            // const Text("Customize Access for this user:", style: TextStyle(color: Colors.white70, fontSize: 13)),
+            // const SizedBox(height: 10),
+            // Obx(() => Column(
+            //   children: controller.permissions.keys.map((key) => Container(
+            //     margin: const EdgeInsets.only(bottom: 8),
+            //     padding: const EdgeInsets.symmetric(horizontal: 12),
+            //     decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(10)),
+            //     child: Row(
+            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //       children: [
+            //         Text(key, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+            //         CupertinoSwitch(
+            //           value: controller.permissions[key]!,
+            //           activeColor: const Color(0xFFFF4500),
+            //           onChanged: (v) => controller.permissions[key] = v,
+            //         ),
+            //       ],
+            //     ),
+            //   )).toList(),
+            // )),
 
             const SizedBox(height: 15),
             CupertinoButton(

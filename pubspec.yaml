@@ -13,14 +13,18 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   
-  # --- අලුතින් එක් කළ Packages ---
-  get: ^4.6.6              # State management සහ Navigation සඳහා
-  google_fonts: ^6.2.1     # ලස්සන Fonts පාවිච්චි කරන්න
+ 
+  get: ^4.6.6              
+  google_fonts: ^8.0.2     
+  firebase_core: ^4.6.0
+  firebase_auth: ^6.3.0
+  cloud_firestore: ^6.2.0
+  change_app_package_name: ^1.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
